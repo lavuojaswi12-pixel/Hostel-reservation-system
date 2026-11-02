@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="HotelReservationSystem" default="jar" basedir=".">
+
+    <property name="src.dir" value="src"/>
+    <property name="test.dir" value="test"/>
+    <property name="lib.dir" value="lib"/>
+    <property name="build.dir" value="build"/>
+    <property name="test.build.dir" value="build-test"/>
+    <property name="dist.dir" value="dist"/>
+    <property name="main.class" value="app.Main"/>
+
+    <!-- Put mysql-connector-j-*.jar in lib/ (needed at run time, not to compile) -->
+    <path id="lib.path">
+        <fileset dir="${lib.dir}" includes="*.jar" erroronmissingdir="false"/>
+    </path>
+
+    <!-- Clean target -->
+    <target name="clean">
+        <delete dir="${build.dir}"/>
+        <delete dir="${test.build.dir}"/>
+        <delete dir="${dist.dir}"/>
+    </target>
+
+    <!-- Check if source directory exists -->
+    <target name="check-src">
+        <available file="${src.dir}" type="dir" property="src.exists"/>
+        <fail unless="src.exists">
+            Source directory '${src.dir}' does not exist. Please check your project structure.
+        </fail>
+    </target>
+
+    <!-- Compile Java sources -->
+    <target name="compile" depends="clean, check-src">
+        <mkdir dir="${build.dir}"/>
+        <javac srcdir="${src.dir}" destdir="${build.dir}" includeantruntime="false" failonerror="true"
+               encoding="UTF-8" debug="true">
+            <classpath refid="lib.path"/>
+        </javac>
+    </target>
+
+    <!-- Compile and run the unit tests (no database needed) -->
+    <target name="test" depends="compile">
+        <mkdir dir="${test.build.dir}"/>
+        <javac srcdir="${test.dir}" destdir="${test.build.dir}" includeantruntime="false" failonerror="true"
+               encoding="UTF-8" debug="true">
+            <classpath>
+                <pathelement location="${build.dir}"/>
+            </classpath>
+        </javac>
+        <java classname="TestRunner" fork="true" failonerror="true">
+            <classpath>
+                <pathelement location="${build.dir}"/>
+                <pathelement location="${test.build.dir}"/>
+            </classpath>
+        </java>
+    </target>
+
+    <!-- Create the jar file -->
+    <target name="jar" depends="compile">
+        <mkdir dir="${dist.dir}"/>
+        <manifestclasspath property="jar.classpath" jarfile="${dist.dir}/HotelReservationSystem.jar">
+            <classpath refid="lib.path"/>
+        </manifestclasspath>
+        <jar destfile="${dist.dir}/HotelReservationSystem.jar" basedir="${build.dir}">
+            <manifest>
+                <attribute name="Main-Class" value="${main.class}"/>
+                <attribute name="Class-Path" value="${jar.classpath}"/>
+            </manifest>
+        </jar>
+    </target>
+
+    <!-- NOTE: Ant does not forward the keyboard to a forked JVM, so the interactive menu
+         cannot be used through "ant run". Use:  java -jar dist/HotelReservationSystem.jar -->
+    <target name="run" depends="jar">
+        <echo>Run the app with:  java -jar ${dist.dir}/HotelReservationSystem.jar</echo>
+    </target>
+
+</project>
